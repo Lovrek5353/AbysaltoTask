@@ -19,7 +19,17 @@ namespace AbySalto.Junior.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateOrderDto dto)
         {
-            if (dto == null) return BadRequest("Podaci narudžbe su prazni.");
+            if (dto == null) return BadRequest("Request body cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(dto.CustomerName))
+            {
+                return BadRequest(new { Message = "Customer name is required." });
+            }
+
+            if (dto.Items == null || dto.Items.Count == 0)
+            {
+                return BadRequest(new { Message = "Order must have at least one item" });
+            }
 
             var createdOrder = await _orderService.CreateOrderAsync(dto);
 
@@ -45,10 +55,26 @@ namespace AbySalto.Junior.Controllers
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] OrderStatus newStatus)
         {
-            var success = await _orderService.UpdateOrderStatusAsync(id, newStatus);
-            if (!success) return NotFound();
+            if (id <= 0) return BadRequest("Invalid order ID");
 
-            return NoContent();
+            if (!Enum.IsDefined(typeof(OrderStatus), newStatus))
+            {
+                return BadRequest("Order status doesn't exist");
+            }
+
+            try
+            {
+                var success = await _orderService.UpdateOrderStatusAsync(id, newStatus);
+
+                if (!success)
+                    return NotFound(new { Message = $"Order with ID {id} was not found" });
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
         }
     }
 }

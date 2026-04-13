@@ -17,6 +17,18 @@ namespace AbySalto.Junior.Services
 
         public async Task<Order> CreateOrderAsync(CreateOrderDto dto)
         {
+            foreach (var item in dto.Items)
+            {
+                if (item.Quantity <= 0)
+                {
+                    throw new ArgumentException($"Amount for item '{item.ProductName}' must be greater than zero.");
+                }
+
+                if (item.Price < 0)
+                {
+                    throw new ArgumentException($"Price for item '{item.ProductName}' can not be negative");
+                }
+            }
             var order = new Order
             {
                 CustomerName = dto.CustomerName,
