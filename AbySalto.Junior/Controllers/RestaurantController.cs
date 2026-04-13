@@ -10,24 +10,32 @@ namespace AbySalto.Junior.Controllers
     public class RestaurantController : ControllerBase
     {
         private readonly IOrderService _orderService;
+        private readonly ILogger<RestaurantController> _logger;
 
-        public RestaurantController(IOrderService orderService)
+        public RestaurantController(IOrderService orderService, ILogger<RestaurantController> logger)
         {
             _orderService = orderService;
+            _logger = logger;
         }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateOrderDto dto)
         {
-            if (dto == null) return BadRequest("Request body cannot be empty");
+            if (dto == null)
+            {
+                _logger.LogWarning("Request body was empty");
+                return BadRequest("Request body cannot be empty");
+            }
 
             if (string.IsNullOrWhiteSpace(dto.CustomerName))
             {
+                _logger.LogWarning("Customer name was missing");
                 return BadRequest(new { Message = "Customer name is required." });
             }
 
             if (dto.Items == null || dto.Items.Count == 0)
             {
+                _logger.LogWarning("Order creation failed: No items provided");
                 return BadRequest(new { Message = "Order must have at least one item" });
             }
 
